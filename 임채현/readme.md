@@ -1,4 +1,6 @@
-# 멀티모달
+<details>
+  <summary>2025-01-14</summary>
+  # 멀티모달
 
 - 여러 개의 데이터 형식을 가지고 수행하는 AI
     - 주로 텍스트, 이미지, 음성, 비디오 등
@@ -36,3 +38,5 @@ https://cookbook.openai.com/examples/multimodal/vision_fine_tuning_on_gpt4o_for_
 3. **VQA (Vision Question Answering)**
 - 입력 모달리티인 이미지와 관련된 질문에 대한 답을 자연어로 출력해 주는 작업
 - 비전 데이터에 존재하는 객체나 배경에 대한 질문을 할 수도 있고, 인물의 상황과 행동에 관한 질문에 답을 얻을 수도 있음
+
+</details>
