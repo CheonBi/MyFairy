@@ -1,5 +1,4 @@
-# 0113 
-# AI 이미지 생성 API 소개
+# 0113 AI 이미지 생성 API 소개
 
 
 ---
@@ -119,8 +118,12 @@
 
 ---
 
-#0114
-# Java Security Methods
+
+
+
+
+---
+# 0114 Java Security Methods
 
 ## 회원가입과 인증
 ### 1. 회원가입 과정
