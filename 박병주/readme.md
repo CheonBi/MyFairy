@@ -1,4 +1,4 @@
-
+# 0113
 ### 3D 가면을 구현하기 위해 필요한 기술
 
 
@@ -105,3 +105,25 @@ public class RedisRepositoryTest {
  - JPA와 동일하게 사용
  - id 값을 따로 설정하지 않으면 랜덤한 키값
  - 저장할때 `save()`, 조회할 때 findById()
+
+# 0114
+
+#### 기본 기능
+- 실시간 비디오 및 오디오 스트리밍
+- 화면 공유
+- 녹화 기능
+- Custom Layouts
+#### 인터랙티브 기능
+- 채팅 및 데이터 메시지
+- WebRTC 데이터 채널
+- Publisher 및 Subscriber 역할 분리
+### 확장 및 통합
+- REST API
+- WebSocket API
+- OpenVidu Browser SDK
+- OpenVidu Server 및 Docker 배포
+
+### OpenVidu에서 각 기능 별 역할(백, 프론트)
+```
+작성 예정정
+``` 
