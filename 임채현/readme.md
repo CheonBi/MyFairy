@@ -1,5 +1,5 @@
 <details>
-  <summary>2025-01-14</summary>
+  <summary>2025-01-13</summary>
   # 멀티모달
 
 - 여러 개의 데이터 형식을 가지고 수행하는 AI
