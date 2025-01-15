@@ -1,5 +1,6 @@
 <details>
   <summary>2025-01-13</summary>
+
   # 멀티모달
 
 - 여러 개의 데이터 형식을 가지고 수행하는 AI
@@ -43,6 +44,7 @@ https://cookbook.openai.com/examples/multimodal/vision_fine_tuning_on_gpt4o_for_
 
 <details>
   <summary>2025-01-14</summary>
+
   # Zustand VS redux
 
 | **항목** | **Redux Toolkit** | **Zustand** |
@@ -224,4 +226,42 @@ function App() {
 }
 export default App;
 ```
+</details>
+
+<details>
+  <summary>2015-01-15<summary>
+
+  # 피그마에서 팀원들과 flow chart, wireframe 작성
+  https://www.figma.com/board/FbTpAaxOS1obYzHsiwvLG1/C206-WireFrame?node-id=0-1&p=f&t=6KJgwWq2EpLUDIZb-0
+
+  # React의 props
+    ```jsx
+    import propTypes from 'prop-types';
+
+    const MyComponent = ({name, children}) => {
+        return (
+            <div>
+                hello, {name} <br/>
+                hi, {children}
+            </div>
+        )
+    }
+
+    MyComponent.propTypes = {
+        name: propTypes.number
+    }
+
+    export default MyComponent
+    ```
+    - 간단 props 사용법
+    - html 태그 안에 props 사용시 {} 필요
+    - props가 배열일 때 배열 함수 사용 가능
+    ```jsx
+    <ul className="tags">
+          <li className="tag">하이</li>
+          {tags.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+    ```
 </details>
