@@ -127,3 +127,7 @@ public class RedisRepositoryTest {
 ```
 작성 예정정
 ``` 
+
+# 0115
+## ERD 초안 작성
+![image.png](./image.png)
