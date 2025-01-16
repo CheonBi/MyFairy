@@ -4,8 +4,6 @@
 
 - 주제1 (옆에 아이콘 다는 걸로 한꺼번에 투표)
     
-    ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/97b9ba3d-ae7c-415a-a91d-37a659d6459e/e96968ea-66e0-4bd6-a5d4-0d0437bd688f/Untitled.png)
-    
     - 요리를 배우고 싶지만 요리 학원은 너무 부담스럽고ㅠㅠ 유튜브로는 한계가 있다
     집에서 더 편하고 쉽게 배울 수 있는 요리 화상 학습 플랫폼 **후추후추**
     - 구현 기능
@@ -37,28 +35,11 @@
         
         ### 문제 정의
         
-        - 치솟는 물가로 집밥을 선호하는 사람들은 증가
-            
-            ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/97b9ba3d-ae7c-415a-a91d-37a659d6459e/056589b7-bf90-4ced-bd3c-befd1bd59150/Untitled.png)
-            
-            ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/97b9ba3d-ae7c-415a-a91d-37a659d6459e/b8710712-652d-4701-926f-48b7b3ec27ed/Untitled.png)
-            
+        - 치솟는 물가로 집밥을 선호하는 사람들은 증가  
         - 요리 학원에서의 높은 재료비와 수강료
-            
-            ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/97b9ba3d-ae7c-415a-a91d-37a659d6459e/9be09b8a-6589-4eb4-8118-73718a197449/Untitled.png)
-            
         - 유튜브 요리 콘텐츠 인기 많지만, 내 상황에 대해 유연하게 대처 어려움
         ex) 국간장은 없고…….진간장은 잇어요! & 당근은 지금 없는데 빼도 되나요??
         ex) 다진마늘 한 스푼에 대한 개인차
-        
-        ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/97b9ba3d-ae7c-415a-a91d-37a659d6459e/36082a18-91d6-4ad5-b070-b6f92b4eeb43/Untitled.png)
-        
-        ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/97b9ba3d-ae7c-415a-a91d-37a659d6459e/05080881-1be1-4f6c-be4c-526e0c541d56/Untitled.png)
-        
-        ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/97b9ba3d-ae7c-415a-a91d-37a659d6459e/30e2f231-7a96-4ae6-8426-39f4889dea1a/Untitled.png)
-        
-        ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/97b9ba3d-ae7c-415a-a91d-37a659d6459e/c0bffbee-4ae7-42c6-8837-c6e7868189cb/Untitled.png)
-        
         - 요리에 관심 많아진 사람 증가, 하지만 양방향으로 소통하며 배울 수 있는 공간 부재
         - 있다하더라도 경제적 부담이 존재
         
