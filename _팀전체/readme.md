@@ -197,4 +197,7 @@
 ### ERD
  - ERD 초안 검토
  - ERD 컨설턴트님 미팅
+### 명세서 작성
+ - 기능 명세서 작성
+    - https://www.notion.so/hhj8276/1778ff1e7d4881cba477d03b7736c9fb
 
