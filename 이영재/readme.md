@@ -323,3 +323,214 @@ Nginx는 그 성능과 효율성 덕분에 대규모 웹 애플리케이션 및 
 
 # 2025-01-16
 
+# 도커 시작
+
+### Spring Boot : application.properties
+
+```yaml
+spring.application.name=proj
+server.port=8080
+
+# DataSource (MySQL)
+spring.datasource.url=jdbc:mysql://mysql-container:3306/ssafy
+spring.datasource.username=ssafy
+spring.datasource.password=ssafy
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA 
+#spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+
+spring.jpa.open-in-view=false
+```
+
+- `hibernate.dialect` 관련 설정 변경:
+    
+    현재 설정에서 `spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect`가 사용되고 있습니다. 이 설정은 Hibernate 6.x부터 더 이상 필요하지 않으며, 대신 **자동으로 MySQL Dialect가 선택됩니다**. 게다가, `MySQL8Dialect`는 deprecated된 상태입니다. 그래서 다음과 같이 수정해야 합니다:
+    
+- **`spring.jpa.database-platform` 설정 제거**: 이 설정을 제거하면 Hibernate가 자동으로 올바른 Dialect를 선택합니다.
+    
+    ```
+    # spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+    ```
+    
+
+### 2. `spring.jpa.open-in-view` 설정 추가:
+
+`spring.jpa.open-in-view`가 기본적으로 `true`로 설정되어 있기 때문에 데이터베이스 쿼리가 뷰 렌더링 시점에 실행될 수 있다는 경고가 발생합니다. 이를 방지하려면 `false`로 설정하는 것이 좋습니다:
+
+- **`spring.jpa.open-in-view=false` 추가**:
+    
+    ```
+    spring.jpa.open-in-view=false
+    ```
+    
+
+## 선택 사항
+
+### 방법1-1. jar 빌드하기
+
+```yaml
+gradlew build
+```
+
+### 1-2. Dockerfile 작성
+
+```docker
+FROM openjdk:17-jdk
+
+WORKDIR /app
+
+COPY build/libs/*SNAPSHOT.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# docker build -t proj:v1.0
+# -t : 태그를 지정
+# proj : 이미지 이름
+# v1.0 태그 이름
+```
+
+### 방법 2-1. Dockerfile에서 jar 파일 만들어서 바로 진행
+
+**Multi-stage Build**
+
+- **효율적인 이미지 크기**: 빌드 도구(`gradle`, `git`, `maven` 등)를 포함한 이미지가 최종 이미지에 포함되지 않아서, 결과적으로 더 작은 런타임 이미지를 만들 수 있습니다.
+- **보안성 강화**: 빌드 환경을 런타임 환경에서 분리함으로써, 개발 환경에만 필요한 도구를 포함시키지 않게 됩니다.
+- **빌드 과정의 분리**: 빌드와 실행을 명확하게 분리함으로써, 나중에 빌드 단계를 수정하거나 재사용하는데 용이합니다.
+
+### Spring Boot 컨테이너 만들기
+
+```docker
+docker run --name server-container -d -p 8080:8080 springserver:1
+```
+
+### Nginx 설정 파일 작성
+
+```yaml
+server {
+        listen 80;
+        location / {
+            proxy_pass http://server-container:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+}
+```
+
+### Nginx Dockerfile 작성
+
+```docker
+FROM nginx:1.27-alpine
+
+COPY backconfig.conf /etc/nginx/conf.d/backconfig.conf
+RUN rm /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### MySQL 이미지 설치
+
+```docker
+docker pull mysql
+```
+
+### Docker MySQL 컨테이너 실행
+
+```docker
+docker run --name <컨테이너명> -e MYSQL_ROOT_PASSWORD=<password> -d -p 3306:3306 mysql:latest
+```
+
+**● --name <container_name>** : <container_name> 이름의 컨테이너를 실행한다.
+
+● **-e** : 컨테이너 내에서 사용할 환경변수를 설정
+
+● **-e MYSQL_ROOT_PASSWORD=<password>** : MySQL의 root 권한의 비밀번호를 <password>로 설정한다.
+
+● **-d** : detach 모드로 컨테이너가 실행된다. 컨테이너가 백그라운드로 실행된다고 보면 된다.
+
+● **-p** <호스트 포트> <컨테이너 포트> : 호스트와 컨테이너의 포트를 연결한다 **(Host에 DB가 이미 실행되고 있다면 3306 포트는 사용중이므로 변경)**
+
+● **mysql:latest** : 컨테이너에 사용할 이미지
+
+```docker
+docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=0000 -d -p 3307:3306 mysql:latest
+```
+
+- MySQL 이 3307 포트 사용중이라 3307로 변경
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/6cd66313-3583-441e-a126-a690f70eccfb/47ed9827-24e7-4778-9644-314e88f8acb7/image.png)
+
+- Exec로 가서 MySQL 명령문 실행
+
+```docker
+# IDE 터미널일 경우
+docker exec -it mysql-container mysql -u root -p
+
+# Docker exec에선
+mysql -u root -p
+
+# 사용자 생성
+CREATE USER 'ssafy'@'%' IDENTIFIED BY 'ssafy';
+
+# 권한 부여
+GRANT ALL PRIVILEGES ON *.* TO 'ssafy'@'%' WITH GRANT OPTION;
+
+# 권한 적용
+FLUSH PRIVILEGES;
+```
+
+### Docker-Commpose 파일
+
+```docker
+services:
+  mysql-container:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: 0000       # 루트 비밀번호 설정
+      MYSQL_DATABASE: ssafy                   # 기본 데이터베이스 설정
+      MYSQL_USER: ssafy                       # 사용자 설정
+      MYSQL_PASSWORD: ssafy                   # 사용자의 비밀번호 설정
+    ports:
+      - 3307:3306
+    networks:
+      - mynet2
+    restart: unless-stopped                   # MySQL 서버가 다운되면 자동으로 재시작
+    volumes:
+      - mysql-data:/var/lib/mysql             # 데이터 유지용 볼륨 설정
+
+  server-container:
+    image: springserver:1
+    ports:
+      - 8080:8080
+#    environment: 환경 변수 설정
+#      - name=value
+    networks:
+      - mynet1
+      - mynet2
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1
+    ports:
+      - 80:80
+    restart: unless-stopped
+    networks:
+      - mynet1
+
+networks:
+  mynet1:
+    driver: bridge
+  mynet2:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+```
