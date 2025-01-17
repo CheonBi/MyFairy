@@ -197,35 +197,37 @@ https://www.figma.com/board/FbTpAaxOS1obYzHsiwvLG1/C206-WireFrame?node-id=0-1&p=
 
 # React의 props
 
-      ```jsx
-      import propTypes from 'prop-types';
+```jsx
+import propTypes from 'prop-types';
 
-      const MyComponent = ({name, children}) => {
-          return (
-              <div>
-                  hello, {name} <br/>
-                  hi, {children}
-              </div>
-          )
-      }
+const MyComponent = ({name, children}) => {
+    return (
+        <div>
+            hello, {name} <br/>
+            hi, {children}
+        </div>
+    )
+}
 
-      MyComponent.propTypes = {
-          name: propTypes.number
-      }
+MyComponent.propTypes = {
+    name: propTypes.number
+}
 
-      export default MyComponent
-      ```
-      - 간단 props 사용법
-      - html 태그 안에 props 사용시 {} 필요
-      - props가 배열일 때 배열 함수 사용 가능
-      ```jsx
-      <ul className="tags">
-            <li className="tag">하이</li>
-            {tags.map((item, i) => (
-              <li key={i}>{item}</li>
-            ))}
-          </ul>
-      ```
+export default MyComponent
+```
+
+- 간단 props 사용법
+- html 태그 안에 props 사용시 {} 필요
+- props가 배열일 때 배열 함수 사용 가능
+
+```jsx
+<ul className="tags">
+      <li className="tag">하이</li>
+      {tags.map((item, i) => (
+        <li key={i}>{item}</li>
+      ))}
+    </ul>
+```
 
 </details>
 
@@ -326,4 +328,61 @@ useEffect(() => {
 - unmount 될 때만 cleanup 함수 실행을 원한다면, 위 처럼 한다
 - 특정 값이 update 되기 직전에 cleanup 함수 실행을 원한다면,
 deps 배열 안에 그 값을 넣어줌
+</details>
+
+<details>
+  <summary>2025-01-17</summary>
+
+  # Figma 목업 작업 시작
+  https://www.figma.com/design/waWQnQnGfNc8SRCEtSxsNe/C206-MockUp?node-id=1-10&t=8cLynh645mUmhC2c-1
+  - color, typography, components, pages 작업 중
+
+  # GIT 커맨드 정리
+  ### git branch 이동하기
+
+```powershell
+git checkout [브랜치 이름]
+```
+
+### 특정 branch 생성 후 해당 branch로 이동
+
+```powershell
+git checkout -b [새로운 브랜치 이름]
+git switch -c [새로운 브랜치 이름]
+```
+
+### 하던 작업 임시로 저장하기
+
+```powershell
+git stash (or) git stash save
+```
+
+- 스택에 새로운 stash 생성
+- working directory 비워짐
+
+### stash 목록 확인 하기
+
+```powershell
+git stash list
+```
+
+### 스택 가장 위의 stash 가져와 적용하기
+
+```powershell
+git stash apply
+```
+
+- 참고로 수정했던 파일들을 복원할 때 반드시 stash 했던 브랜치일 필요는 없
+
+### 원격 저장소의 모든 브랜치에 대한 최신 이력 정보 확인하기
+
+```powershell
+git remote update
+```
+
+### 현재 위치한 브랜치에 대한 최신 이력 정보 확인하기
+
+```powershell
+git fetch
+```
 </details>
