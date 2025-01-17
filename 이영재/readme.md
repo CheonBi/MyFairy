@@ -534,3 +534,210 @@ volumes:
   mysql-data:
     driver: local
 ```
+
+# 2025-01-17
+
+## (React + Nginx ) + Spring + Mysql -> Docker
+
+### Spring - Docker file
+```
+#FROM openjdk:17-jdk
+#
+#WORKDIR /app
+#
+#COPY build/libs/*SNAPSHOT.jar app.jar
+#
+#ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# docker build -t proj:v1.0
+# -t : 태그를 지정
+# proj : 이미지 이름
+# v1.0 태그 이름
+
+FROM amazoncorretto:17 AS build
+WORKDIR /app
+COPY . .
+RUN ./gradlew clean build -x test --refresh-dependencies
+
+# Runtime stage
+FROM amazoncorretto:17 AS runtime
+WORKDIR /app
+COPY --from=build /app/build/libs/*.jar /app/server.jar
+EXPOSE 8080
+CMD ["java", "-jar", "/app/server.jar"]
+```
+
+### React - Docker file
+```
+# 1단계: 빌드용 컨테이너 (Vite 사용)
+FROM node:alpine AS builder
+
+WORKDIR /usr/src/app
+
+# package.json과 package-lock.json을 먼저 복사하여 캐시 활용
+COPY package.json package-lock.json ./
+
+# 의존성 설치
+RUN npm install
+
+# 소스 코드 복사
+COPY ./ ./
+
+# Vite로 React 앱 빌드
+RUN npm run build
+
+# 빌드 디렉토리 확인
+RUN if [ -d "/usr/src/app/dist" ]; then echo "Build directory exists"; ls -alh /usr/src/app/dist; else echo "Build directory does not exist"; fi
+
+# 2단계: Nginx 컨테이너
+FROM nginx:1.27-alpine
+
+# 빌드된 React 앱 파일을 Nginx의 html 디렉토리로 복사
+COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
+
+# Nginx 포트 노출
+EXPOSE 80
+
+# Nginx 실행
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### Nginx - Docker file
+```
+FROM nginx:1.27-alpine
+
+# nginx.conf를 컨테이너의 Nginx 설정 디렉토리로 복사
+COPY conf/nginx.conf /etc/nginx/nginx.conf
+
+# 루트 폴더의 frontend 디렉토리에서 default.conf를 Nginx 설정 디렉토리로 복사
+COPY frontend/default.conf /etc/nginx/conf.d/default.conf
+
+# 기본 default.conf 제거 (필요한 경우)
+RUN rm /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### nginx.conf
+```
+worker_processes 1;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    server {
+        listen 80;
+        client_max_body_size 100M;
+
+        location /api {
+            proxy_pass http://server-container:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location / {
+            proxy_pass http://client-container:3000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}
+```
+
+### default.conf
+```
+server {
+    listen 3000;
+    location / {
+        root /usr/share/nginx/html;
+        index index.html index.htm;
+        try_files $uri  $uri/ /index.html;
+    }
+}
+```
+
+### docker-compose.yml
+```
+services:
+  mysql-container:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: 0000       # 루트 비밀번호 설정
+      MYSQL_DATABASE: ssafy                   # 기본 데이터베이스 설정
+      MYSQL_USER: ssafy                       # 사용자 설정
+      MYSQL_PASSWORD: ssafy                   # 사용자의 비밀번호 설정
+    ports:
+      - 3307:3306
+    networks:
+      - backend_network
+    restart: always                   # MySQL 서버가 다운되면 자동으로 재시작
+    volumes:
+      - mysql-data:/var/lib/mysql             # 데이터 유지용 볼륨 설정
+
+  server-container:
+    build: ./backend
+    image: springserver:1
+    ports:
+      - 8080:8080
+#    environment: 환경 변수 설정
+#      - name=value
+    depends_on:
+      - mysql-container
+    networks:
+      - backend_network
+    restart: always
+
+  client-container:
+    depends_on:
+      - server-container
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: react:1
+    ports:
+      - 3000:3000
+    networks:
+      - frontend_network
+    restart: always
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./conf/Dockerfile
+    image: nginx:1
+    ports:
+      - 80:80
+      - 443:443
+    restart: unless-stopped
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - frontend_network
+      - backend_network
+    depends_on:
+      - server-container
+      - client-container
+
+networks:
+  frontend_network:
+    driver: bridge
+  backend_network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+```
+
+- nginx와 react 연결 문제 발생
+- dockerfile 수정하며 오류 해결중중
