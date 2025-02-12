@@ -15,7 +15,7 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
@@ -40,9 +40,9 @@ spring:
       client:
         registration:
           kakao:
-            client-id: ${oauth_kakao_client_id}
-            client-secret: ${oauth_kakao_secert}
-            redirect-uri: ${oauth_kakao_redirect_uri}
+            client-id: ${OAUTH_KAKAO_CLIENT_ID}
+            client-secret: ${OAUTH_KAKAO_SECRET}
+            redirect-uri: ${OAUTH_KAKAO_REDIRECT_URI}
             authorization-grant-type: authorization_code
             scope: profile_nickname, account_email
         provider:
@@ -54,8 +54,8 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET}
-  accessExpiration: 10000000
-  refreshExpiration: 604800000
+  accessExpiration: ${JWT_ACCESSEXPIRATION}
+  refreshExpiration: ${JWT_REFRESHEXPIRATION}
 
 aws:
   s3:

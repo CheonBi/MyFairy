@@ -5,9 +5,10 @@ FROM python:3.11-slim
 WORKDIR /AI/
 
 # 필요한 시스템 패키지 설치
-RUN apt-get update && apt-get install -y \
+RUN apt-get clean && apt-get update && apt-get install -y \
     build-essential \
     ffmpeg \
+    --fix-missing \
     && rm -rf /var/lib/apt/lists/*
 
 # 의존성 파일을 복사
