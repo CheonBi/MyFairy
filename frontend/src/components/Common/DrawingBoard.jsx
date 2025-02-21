@@ -63,28 +63,28 @@ const DrawingBoard = forwardRef(
       return () => clearInterval(interval);
     }, [useHeartBeat]);
 
-    useEffect(() => {
-      const disableTouch = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      };
+    // useEffect(() => {
+    //   const disableTouch = (e) => {
+    //     e.preventDefault();
+    //     e.stopPropagation();
+    //   };
 
-      if (isDrawingComplete) {
-        document.addEventListener('touchstart', disableTouch, {
-          passive: false,
-        });
-        document.addEventListener('touchmove', disableTouch, {
-          passive: false,
-        });
-        document.addEventListener('touchend', disableTouch, { passive: false });
-      }
+    //   if (isDrawingComplete) {
+    //     document.addEventListener('touchstart', disableTouch, {
+    //       passive: false,
+    //     });
+    //     document.addEventListener('touchmove', disableTouch, {
+    //       passive: false,
+    //     });
+    //     document.addEventListener('touchend', disableTouch, { passive: false });
+    //   }
 
-      return () => {
-        document.removeEventListener('touchstart', disableTouch);
-        document.removeEventListener('touchmove', disableTouch);
-        document.removeEventListener('touchend', disableTouch);
-      };
-    }, [isDrawingComplete]);
+    //   return () => {
+    //     document.removeEventListener('touchstart', disableTouch);
+    //     document.removeEventListener('touchmove', disableTouch);
+    //     document.removeEventListener('touchend', disableTouch);
+    //   };
+    // }, [isDrawingComplete]);
 
     useImperativeHandle(ref, () => ({
       getPNGFile: () => {

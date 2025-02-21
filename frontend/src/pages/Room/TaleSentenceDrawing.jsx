@@ -165,11 +165,10 @@ const TaleSentenceDrawing = () => {
   useEffect(() => {
     if (loading || showDrawingModal) return;
 
-    if (currentStep >= 4) {
+    if (currentStep >= 3) {
       setTimeLeft(0);
       setIsWarning(false);
       canvasRef.current.completeDrawing();
-
       return;
     }
 
@@ -185,7 +184,6 @@ const TaleSentenceDrawing = () => {
         }
         if (prev <= 1) {
           handleConfirm(); // 시간이 다 되면 자동으로 확인 버튼 클릭
-          clearInterval(timer);
           setIsWarning(false);
           return 0;
         }
