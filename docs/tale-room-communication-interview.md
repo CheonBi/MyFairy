@@ -114,6 +114,26 @@
 
 면접 포인트: “텍스트/프롬프트/TTS를 병렬화하고, 최종 단계 진입은 조건 충족 게이트로 제어.”
 
+### `/topic/tale/{roomId}` 브로드캐스트 이후 클라이언트 분배 방식
+
+서버는 `SentenceOwnerPair[]`(owner, order, sentence)를 **방 전체에 동일 payload로 브로드캐스트**합니다.  
+이후 각 클라이언트가 프론트에서 자신의 모드/아이디 기준으로 다시 분배합니다.
+
+- 1) 공통 수신
+  - `playStore.setSubscribeTale(roomId)`에서 `/topic/tale/{roomId}`를 구독하고,
+    수신된 배열을 `drawDirection` 상태로 저장합니다.
+- 2) 정렬(공통)
+  - `TaleSentenceDrawing`에서 `drawDirection`을 `order` 오름차순으로 정렬해
+    페이지 순서를 고정합니다.
+- 3) 멀티모드 분배
+  - `owner === memberId` 조건으로 **내 문장 1개**를 선택(`multiModeSentences`).
+  - 따라서 각 플레이어는 자신에게 할당된 한 문장만 보고 그립니다.
+- 4) 싱글모드 분배
+  - 문장 배열 전체를 순서대로 사용(`singleModeSentences[currentStep]`).
+  - 한 사용자가 4개 문장을 차례대로 그리며 `addPage()`로 다음 문장으로 이동합니다.
+
+즉, 백엔드는 “전원에게 같은 할당표”를 보내고, 프론트가 “내 역할만 추출(멀티) / 전체 순회(싱글)”로 최종 분배를 완성합니다.
+
 ## D. 손그림 제출 → AI 재탄생
 
 1. 프론트가 `POST /api/tale/submit/picture` (multipart) 제출.
