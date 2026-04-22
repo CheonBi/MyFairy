@@ -7,7 +7,7 @@ flowchart LR
   U[사용자 브라우저\nReact + Zustand] -->|아이디/비번 또는 카카오 code| A[/api/auth/login\n/api/auth/kakao/callback/]
   A --> S[Spring AuthService/KakaoService]
   S --> J[JwtUtil\nAccess/Refresh 발급]
-  S --> R[(Redis)\nrefresh:{loginId} 저장]
+  S --> R[(Redis\nrefresh key by loginId)]
   S --> U
 
   U -->|Authorization: Bearer accessToken| F[JwtAuthenticationFilter]
