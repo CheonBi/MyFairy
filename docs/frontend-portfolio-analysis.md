@@ -117,7 +117,7 @@ flowchart TD
   K --> Z
 
   H -- false --> L[isRefreshing=true]
-  L --> M[/auth/refresh 호출]
+  L --> M["(auth/refresh) API 호출"]
   M --> N{refresh 성공?}
   N -- 성공 --> O[onRefreshed로 큐 일괄 재개]
   O --> P[store.accessToken 갱신]
@@ -135,10 +135,15 @@ flowchart TD
 #### 1) 중복 refresh 차단 플래그/큐 선언
 - `isRefreshing`으로 refresh 단일화 여부를 제어합니다.
 - `refreshSubcribers` 배열로 대기 요청을 큐잉합니다.
+- `addRefreshSubscriber` 함수가 대기 요청 등록 지점 역할을 합니다.
 
 ```js
 let isRefreshing = false;
 let refreshSubcribers = [];
+
+const addRefreshSubscriber = (callback) => {
+  refreshSubcribers.push(callback);
+};
 ```
 
 #### 2) refresh 완료 시 큐에 쌓인 요청 재개
@@ -163,6 +168,79 @@ if (isRefreshing) {
   });
 }
 ```
+
+### `addRefreshSubscriber` + `refreshAccessToken` 연관성 심층 연구
+
+아래는 요청하신 `refreshAccessToken` 코드와 `addRefreshSubscriber`를 연결해 해석한 내용입니다.
+
+#### 1) Promise의 역할
+- `isRefreshing === true`인 순간, 현재 요청은 **즉시 refresh API를 다시 호출하지 않고** `new Promise(...)`를 반환합니다.
+- 이 Promise는 “지금 당장 결과가 없으니, refresh가 끝날 때까지 기다렸다가 새 토큰으로 이어서 처리하겠다”는 **대기 핸들**입니다.
+- 핵심은 `resolve`가 `addRefreshSubscriber`로 등록된 콜백 내부에서 호출된다는 점입니다. 즉, 실제 resolve 시점은 `onRefreshed(newToken)`가 실행된 뒤입니다.
+- 따라서 다수의 동시 401 요청은 “각자 refresh 호출”이 아니라 “각자 Promise 대기”로 바뀌어 refresh storm을 줄입니다.
+
+#### 1-1) “구독 배열 안 Promise 대기”의 정확한 메커니즘
+- 엄밀히 말해 `refreshSubcribers` 배열 안에 직접 저장되는 것은 Promise가 아니라 **callback 함수**입니다.
+- 각 요청이 `new Promise((resolve) => { addRefreshSubscriber((newToken) => resolve(newToken)); })`를 만들면,
+  Promise 객체는 요청 호출 스택 밖으로 반환되며 **pending 상태로 유지**됩니다.
+- 이 Promise가 pending으로 남는 이유는, 해당 Promise를 resolve할 수 있는 유일한 코드가 subscriber callback 내부에 있고,
+  그 callback은 `onRefreshed(newToken)`가 호출될 때까지 실행되지 않기 때문입니다.
+- 즉, 대기 구조는 아래처럼 분리됩니다.
+  1. Promise 생성: 각 401 요청이 자신만의 pending Promise 생성
+  2. callback 등록: resolve를 감싼 callback을 `refreshSubcribers`에 push
+  3. refresh 성공 이벤트: `onRefreshed`가 배열을 순회하며 callback 실행
+  4. Promise 해제: callback 내부 `resolve(newToken)`가 호출되며 pending -> fulfilled 전환
+- 결과적으로 “배열에 들어간 callback이 트리거되기 전까지 Promise는 자동으로 진행되지 않는다”가 핵심입니다.
+- 이 덕분에 refresh 완료 전에는 재요청이 성급하게 실행되지 않고, refresh 완료 후에만 안전하게 재개됩니다.
+
+#### 1-2) `return new Promise(...)`와 JS 콜스택, 구독배열의 연결
+- 질문의 핵심 코드:
+
+```js
+if (isRefreshing) {
+  return new Promise((resolve) => {
+    addRefreshSubscriber((newToken) => {
+      resolve(newToken);
+    });
+  });
+}
+```
+
+- 정확히는 “Promise 자체가 콜스택에 계속 쌓여 대기”하는 것이 아니라, 아래 순서로 동작합니다.
+  1. 현재 함수(`refreshAccessToken`) 실행 프레임이 콜스택에 올라감
+  2. `new Promise(executor)`의 executor가 **즉시 실행**되며 `addRefreshSubscriber(...)`로 callback 등록
+  3. Promise는 아직 `resolve`/`reject`되지 않았으므로 `pending` 객체로 반환
+  4. 함수 프레임은 콜스택에서 내려가고, Promise 객체 참조만 호출자(인터셉터 체인)에 남음
+- 즉 “대기”는 콜스택 점유가 아니라, **pending Promise + subscriber callback 참조**로 유지됩니다.
+
+- 그다음 refresh 성공 시:
+  1. 다른 경로에서 진행 중이던 refresh가 완료
+  2. `onRefreshed(newToken)`가 `refreshSubcribers` 배열을 순회하며 callback 실행
+  3. callback 내부 `resolve(newToken)` 호출
+  4. 해당 Promise가 fulfilled로 전환되고, `await refreshAccessToken()` 지점의 후속 로직이 재개
+
+- 이벤트루프 관점에서 보면:
+  - callback 실행 자체는 `onRefreshed` 호출 시점의 동기 흐름에서 순차 수행
+  - Promise 이행 후 `await` 재개는 마이크로태스크 큐를 통해 이어져 인터셉터 후속 코드가 진행
+- 따라서 구독배열은 “대기 중 Promise를 깨우는 트리거 목록” 역할을 하며, 콜스택 대신 **참조 기반 비동기 재개 메커니즘**을 제공한다고 볼 수 있습니다.
+
+#### 2) `refreshSubcribers` callback들이 한꺼번에 실행되는지 여부
+- 결론부터 말하면, **같은 refresh 성공 이벤트에서 순차적으로 매우 빠르게 실행**됩니다.
+- `onRefreshed`는 `refreshSubcribers.map((callback) => callback(newToken))`로 배열을 순회하므로, 자바스크립트 실행 모델상 콜백은 한 이벤트 루프 틱에서 순차 호출됩니다.
+- 다만 각 콜백이 resolve한 뒤 이어지는 네트워크 재요청(`api(originalRequest)`)은 비동기이므로, 전체 시스템 관점에서는 거의 동시에 재시도되는 것처럼 보일 수 있습니다.
+- 즉 “콜백 실행은 동기 순차”, “재요청 진행은 비동기 병렬성”으로 이해하면 정확합니다.
+
+#### 3) `onRefreshed` 구조 연구
+- `onRefreshed`는 아래 2단계 구조를 가집니다.
+  1. 큐 drain: 등록된 subscriber 콜백을 모두 실행해 대기 Promise들을 resolve
+  2. 큐 clear: `refreshSubcribers.length = 0`으로 이전 대기열 제거
+- 이 구조의 의의:
+  - **중복 처리 방지**: 같은 콜백이 다음 refresh 라운드에서 다시 실행되지 않음
+  - **메모리 관리**: 처리된 콜백 참조를 제거해 누적을 차단
+  - **라운드 경계 명확화**: “이번 refresh에 대기한 요청들”만 정확히 깨워줌
+- 추가 관찰 포인트:
+  - 성공 분기(`data.status === 'SU'`)에서만 `onRefreshed`를 호출하므로, 실패 시 큐 대기 요청은 후속 에러 경로에서 정리 전략을 명확히 두는 것이 안전합니다.
+  - 현재 코드에서도 실패 시 인증 상태 초기화 및 reject 처리로 흐름은 끊기지만, 장기적으로는 실패 시 subscriber 일괄 reject 전략을 넣으면 더 명시적입니다.
 
 #### 4) 인터셉터에서 401 재시도/403 로그아웃 처리
 - `_retry` 플래그로 재시도 루프를 방지합니다.
