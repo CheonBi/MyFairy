@@ -117,7 +117,7 @@ flowchart TD
   K --> Z
 
   H -- false --> L[isRefreshing=true]
-  L --> M["auth refresh API 호출"]
+  L --> M["(auth/refresh) API 호출"]
   M --> N{refresh 성공?}
   N -- 성공 --> O[onRefreshed로 큐 일괄 재개]
   O --> P[store.accessToken 갱신]
