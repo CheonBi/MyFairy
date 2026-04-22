@@ -14,13 +14,13 @@ flowchart LR
   F --> C[SecurityContext 인증 주입]
   C --> API[보호된 API Controller]
 
+  U -->|웹소켓 CONNECT + Authorization 헤더| WS[FilterChannelInterceptor]
+  WS --> WSC[STOMP 세션 사용자 설정]
+
   U -->|401 응답 시| RE[/api/auth/refresh\nrefreshToken 전달/]
   RE --> V[RefreshToken 검증\nJWT 서명+만료 + Redis 일치]
   V --> NA[새 AccessToken 발급]
   NA --> U
-
-  U -->|웹소켓 CONNECT + Authorization 헤더| WS[FilterChannelInterceptor]
-  WS --> WSC[STOMP 세션 사용자 설정]
 ```
 
 ---
